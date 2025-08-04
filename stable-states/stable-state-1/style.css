@@ -1,0 +1,604 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #ffffff;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: text;
+    user-select: text;
+    /* Prevent zoom on iOS when focusing inputs */
+    -webkit-text-size-adjust: 100%;
+    /* Prevent elastic scrolling on iOS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    height: 56px;
+    position: relative;
+    z-index: 10;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.back-button, .header-icon, .toolbar-button {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    transition: background-color 0.2s ease;
+}
+
+.back-button:hover, .header-icon:hover, .toolbar-button:hover {
+    background-color: #f1f3f4;
+}
+
+.back-button:active, .header-icon:active, .toolbar-button:active {
+    background-color: #e8eaed;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent content from jumping */
+    position: relative;
+}
+
+.note-title {
+    margin-bottom: 16px;
+}
+
+.title-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 22px;
+    font-weight: 400;
+    color: #202124;
+    background: transparent;
+    padding: 8px 0;
+    font-family: inherit;
+    /* Prevent zoom on iOS */
+    font-size: max(16px, 22px);
+}
+
+.title-input::placeholder {
+    color: #9aa0a6;
+}
+
+.note-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #202124;
+    background: transparent;
+    font-family: inherit;
+    flex: 1;
+    min-height: 200px;
+    padding: 8px 0;
+    /* Prevent zoom on iOS */
+    font-size: max(16px, 16px);
+    /* Ensure visibility */
+    display: block !important;
+}
+
+.content-textarea::placeholder {
+    color: #9aa0a6;
+}
+
+
+
+/* Checkbox and bullet containers */
+.checkbox-container, .bullet-container {
+    margin-top: 8px;
+}
+
+/* Material Icons styling - ensure all icons are 24px */
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px !important;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Line-based input system */
+.lines-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.line-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    position: relative;
+    min-height: 40px;
+}
+
+
+
+.line-content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    position: relative;
+    flex-wrap: nowrap;
+}
+
+.line-text-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #202124;
+    background: transparent;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 24px;
+    padding: 8px 0;
+    font-weight: 400;
+    /* Prevent zoom on iOS */
+    font-size: max(16px, 16px);
+    /* Ensure visibility */
+    display: block !important;
+}
+
+.line-text-input::placeholder {
+    color: #bebebe;
+    font-weight: 400;
+}
+
+.line-text-input:focus::placeholder {
+    color: #bebebe;
+}
+
+/* Drag indicator - now positioned at end of content */
+.drag-indicator {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    cursor: grab;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* Multiline positioning - align to first line */
+.drag-indicator.multiline-position {
+    align-self: flex-start;
+}
+
+/* Show drag indicator for checkbox and bullet inputs */
+.line-wrapper.has-content .drag-indicator {
+    opacity: 0.6;
+    visibility: visible;
+}
+
+.line-wrapper.has-content:hover .drag-indicator {
+    opacity: 1;
+}
+
+/* Hide drag indicator completely for text inputs */
+.line-wrapper:not(.has-content) .drag-indicator {
+    width: 0;
+    overflow: hidden;
+}
+
+.drag-indicator:active {
+    cursor: grabbing;
+}
+
+/* Input type icons */
+.input-type-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    flex-shrink: 0;
+}
+
+/* Cursor indicator */
+.cursor-indicator {
+    width: 2px;
+    height: 24px;
+    background-color: #2f8ad9;
+    position: absolute;
+    left: 0;
+    top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.line-text-input:focus + .cursor-indicator,
+.checkbox-item-text:focus ~ .cursor-indicator,
+.bullet-item-text:focus ~ .cursor-indicator {
+    opacity: 1;
+}
+
+.checkbox-item, .bullet-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Bullet point styling */
+.bullet-point {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #202124;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.checkbox-item-text, .bullet-item-text {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #202124;
+    line-height: 1.4;
+    resize: none;
+    overflow: hidden;
+    min-height: 24px;
+    font-weight: 400;
+    /* Prevent zoom on iOS */
+    font-size: max(16px, 16px);
+}
+
+.checkbox-item-text::placeholder, .bullet-item-text::placeholder {
+    color: #bebebe;
+    font-weight: 400;
+}
+
+.checkbox-item.completed .checkbox-item-text {
+    text-decoration: line-through;
+    color: #5f6368;
+}
+
+.item-delete {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #5f6368;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+}
+
+/* Show close button only when checkbox has content */
+.checkbox-item.has-content .item-delete {
+    opacity: 1;
+}
+
+/* Debug: make delete button always visible for testing */
+.item-delete {
+    opacity: 1 !important;
+}
+
+.checkbox-item:hover .item-delete {
+    opacity: 1;
+}
+
+.bullet-item:hover .item-delete {
+    opacity: 1;
+}
+
+/* Ensure delete button is always clickable when visible */
+.item-delete {
+    pointer-events: auto;
+    z-index: 10;
+}
+
+.item-delete:hover {
+    background-color: #f1f3f4;
+    color: #202124;
+}
+
+.item-delete .material-icons {
+    font-size: 24px !important;
+    width: 24px;
+    height: 24px;
+}
+
+/* Bottom Toolbar */
+.bottom-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #fff;
+    border-top: 1px solid #e0e0e0;
+    gap: 4px;
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.text-format {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 6px;
+}
+
+.format-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: #5f6368;
+    line-height: 1;
+}
+
+.underline {
+    width: 12px;
+    height: 2px;
+    background-color: #5f6368;
+    margin-top: 2px;
+}
+
+
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+    .title-input {
+        font-size: max(16px, 20px);
+        padding: 12px 0;
+    }
+    
+    .content-textarea {
+        font-size: max(16px, 16px);
+        padding: 12px 0;
+        min-height: 150px !important; /* Reduce min-height for mobile */
+    }
+
+    .main-content {
+        padding: 12px;
+        /* Stable content area */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        /* Prevent content jumps */
+        min-height: 0;
+        position: relative;
+        height: auto; /* Ensure proper height */
+    }
+
+    .note-content {
+        flex: 1;
+        display: flex !important; /* Force display */
+        flex-direction: column;
+        min-height: 150px; /* Ensure minimum height */
+    }
+
+    .header {
+        padding: 8px 12px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 100;
+    }
+
+    .bottom-toolbar {
+        padding: 8px 12px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 100;
+        background-color: #fff;
+        border-top: 1px solid #e0e0e0;
+    }
+}
+
+/* Handle mobile keyboard appearance */
+@media (max-width: 480px) {
+    /* When keyboard is open */
+    body.keyboard-open {
+        /* Keep body stable, don't change height */
+        overflow: hidden;
+    }
+    
+    /* Position bottom toolbar above keyboard with smooth transition */
+    body.keyboard-open .bottom-toolbar {
+        position: fixed;
+        bottom: var(--keyboard-height, 0px);
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        border-top: 1px solid #e0e0e0;
+        z-index: 1000;
+        transition: bottom 0.2s ease-out;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Adjust main content when keyboard is active */
+    body.keyboard-open .main-content {
+        /* Don't change the height dramatically */
+        padding-bottom: calc(56px + 10px); /* Toolbar height + small buffer */
+        /* Keep content stable, prevent jumping */
+        transform: translateY(0);
+        will-change: auto;
+    }
+    
+    /* Prevent content area from shrinking too much */
+    .main-content.keyboard-active {
+        /* Stable content area that doesn't jump */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        /* Prevent any unwanted transforms */
+        transform: none;
+        transition: none;
+    }
+}
+
+/* Ensure inputs stay visible when keyboard is open */
+@supports (height: 100dvh) {
+    @media (max-width: 480px) {
+        body {
+            height: 100dvh;
+        }
+        
+        body.keyboard-open {
+            height: 100dvh;
+        }
+        
+        /* Enhanced toolbar positioning with dvh */
+        body.keyboard-open .bottom-toolbar {
+            bottom: var(--keyboard-height, 0px);
+        }
+    }
+}
+
+/* Fallback for older browsers */
+@media (max-width: 480px) {
+    .bottom-toolbar {
+        position: relative;
+        bottom: 0;
+    }
+    
+    /* When keyboard is detected, switch to fixed positioning */
+    body.keyboard-detected .bottom-toolbar {
+        position: fixed;
+        bottom: var(--keyboard-height, 0px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #202124;
+        color: #e8eaed;
+    }
+    
+    .header, .bottom-toolbar {
+        background-color: #2d2e30;
+        border-color: #3c4043;
+    }
+    
+    .title-input, .content-textarea {
+        color: #e8eaed;
+    }
+    
+    .title-input::placeholder, .content-textarea::placeholder {
+        color: #9aa0a6;
+    }
+    
+    .back-button:hover, .header-icon:hover, .toolbar-button:hover {
+        background-color: #3c4043;
+    }
+    
+    .back-button:active, .header-icon:active, .toolbar-button:active {
+        background-color: #5f6368;
+    }
+    
+    /* Dark mode for fixed toolbar */
+    body.keyboard-open .bottom-toolbar {
+        background-color: #2d2e30;
+        border-color: #3c4043;
+    }
+}

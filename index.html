@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Google Keep Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fbbc04">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Keep Clone">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="address=no">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="back-button">
+                <span class="material-icons">arrow_back</span>
+            </button>
+        </div>
+        <div class="header-right">
+            <button class="header-icon">
+                <span class="material-icons">desktop_windows</span>
+            </button>
+            <button class="header-icon">
+                <span class="material-icons">cloud_upload</span>
+            </button>
+            <button class="header-icon">
+                <span class="material-icons">cloud_download</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <form autocomplete="off" data-form-type="other">
+            <div class="note-title">
+                <input type="text" 
+                       name="note-title"
+                       placeholder="Title" 
+                       class="title-input"
+                       autocomplete="new-password"
+                       autocorrect="off"
+                       autocapitalize="sentences"
+                       spellcheck="false"
+                       data-form-type="other"
+                       readonly onfocus="this.removeAttribute('readonly');">
+            </div>
+            <div class="note-content">
+                <textarea name="note-content"
+                          placeholder="Take a note..." 
+                          class="content-textarea"
+                          autocomplete="new-password"
+                          autocorrect="off"
+                          autocapitalize="sentences"
+                          spellcheck="true"
+                          data-form-type="other"
+                          readonly onfocus="this.removeAttribute('readonly');"></textarea>
+                <div class="checkbox-container" style="display: none;"></div>
+                <div class="bullet-container" style="display: none;"></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bottom Toolbar -->
+    <div class="bottom-toolbar">
+        <button class="toolbar-button">
+            <span class="material-icons">add</span>
+        </button>
+        <button class="toolbar-button">
+            <span class="material-icons">more_vert</span>
+        </button>
+        <button class="toolbar-button text-format">
+            <span class="format-text">A</span>
+            <div class="underline"></div>
+        </button>
+        <button class="toolbar-button">
+            <span class="material-icons">redo</span>
+        </button>
+        <button class="toolbar-button">
+            <span class="material-icons">undo</span>
+        </button>
+        <div class="spacer"></div>
+        <button class="toolbar-button">
+            <span class="material-icons">more_vert</span>
+        </button>
+    </div>
+
+
+
+    <script src="script.js"></script>
+</body>
+</html>
