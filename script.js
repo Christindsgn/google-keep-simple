@@ -7,6 +7,16 @@ class GoogleKeepApp {
         this.lastTap = 0;
         this.lineItems = []; // Array to track all line items
         this.nextLineId = 0;
+        
+        // Drag and drop state management
+        this.dragState = {
+            isDragging: false,
+            draggedItem: null,
+            draggedIndex: -1,
+            mouseY: 0,
+            offsetY: 0
+        };
+        
         this.init();
     }
 
@@ -15,6 +25,7 @@ class GoogleKeepApp {
         this.loadCurrentNote();
         this.setupPWA();
         this.setupInputTypeSwitching();
+        this.setupDragAndDrop();
     }
 
     bindEvents() {
@@ -27,7 +38,25 @@ class GoogleKeepApp {
         // Toolbar buttons
         this.bindToolbarButtons();
         
-
+        // Drag and drop events
+        document.addEventListener('mousemove', (e) => {
+            if (this.dragState.isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            this.handleMouseMove(e);
+        });
+        document.addEventListener('mouseup', () => {
+            this.handleMouseUp();
+        });
+        
+        // Touch events for mobile drag and drop
+        document.addEventListener('touchmove', (e) => {
+            if (this.dragState.isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { passive: false });
 
         // Auto-save on visibility change
         document.addEventListener('visibilitychange', () => {
@@ -630,6 +659,15 @@ class GoogleKeepApp {
                 this.deleteLine(lineWrapper);
             });
             
+            // Setup drag handle for checkbox items
+            const lineIndex = this.getLineIndex(lineWrapper);
+            dragHandle.addEventListener('mousedown', (e) => {
+                this.handleDragStart(e, lineWrapper, lineIndex);
+            });
+            dragHandle.addEventListener('touchstart', (e) => {
+                this.handleDragStart(e, lineWrapper, lineIndex);
+            });
+            
             // Update checkbox content visibility
             textInput.addEventListener('input', () => {
                 if (textInput.value.trim() !== '') {
@@ -699,6 +737,15 @@ class GoogleKeepApp {
                 e.stopImmediatePropagation();
                 console.log('Delete button clicked for line:', lineWrapper.dataset.lineId);
                 this.deleteLine(lineWrapper);
+            });
+            
+            // Setup drag handle for bullet items
+            const lineIndex = this.getLineIndex(lineWrapper);
+            dragHandle.addEventListener('mousedown', (e) => {
+                this.handleDragStart(e, lineWrapper, lineIndex);
+            });
+            dragHandle.addEventListener('touchstart', (e) => {
+                this.handleDragStart(e, lineWrapper, lineIndex);
             });
             
             this.setupLineEvents(lineWrapper, textInput);
@@ -844,6 +891,215 @@ class GoogleKeepApp {
     // handleItemDelete function removed - now handled by deleteLine in per-line system
 
     // Drag and drop functionality removed
+
+    setupDragAndDrop() {
+        // This method will be called after the DOM is loaded
+        // Drag and drop functionality is set up in updateLineDisplay
+        console.log('Drag and drop setup initialized');
+    }
+
+    handleDragStart(e, lineWrapper, index) {
+        const inputType = lineWrapper.dataset.inputType;
+        
+        // Only allow drag for checkbox and bullet items
+        if (inputType !== 'checkbox' && inputType !== 'bullet') {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.dragState.isDragging = true;
+        this.dragState.draggedItem = lineWrapper;
+        this.dragState.draggedIndex = index;
+        this.dragState.mouseY = e.clientY || e.touches[0].clientY;
+        this.dragState.offsetY = this.dragState.mouseY - lineWrapper.getBoundingClientRect().top;
+
+        // Add dragging class
+        lineWrapper.classList.add('dragging');
+        
+        // Create floating item
+        this.createFloatingItem(lineWrapper, lineWrapper.offsetTop);
+        
+        // Create placeholder
+        this.createDragPlaceholder(lineWrapper);
+        
+        console.log('Drag started for item:', index, 'Type:', inputType);
+    }
+
+    handleMouseMove(e) {
+        if (!this.dragState.isDragging) return;
+
+        const mouseY = e.clientY || (e.touches && e.touches[0].clientY);
+        if (!mouseY) return;
+
+        this.dragState.mouseY = mouseY;
+        
+        // Update floating item position
+        const newTop = mouseY - this.dragState.offsetY;
+        this.updateFloatingItemPosition(newTop);
+        
+        // Find drop target
+        const dropTarget = this.findDropTarget(mouseY);
+        if (dropTarget && dropTarget !== this.dragState.draggedItem) {
+            this.updateDragPlaceholder(dropTarget);
+        }
+    }
+
+    handleMouseUp() {
+        if (!this.dragState.isDragging) return;
+
+        const draggedItem = this.dragState.draggedItem;
+        const draggedIndex = this.dragState.draggedIndex;
+        
+        // Find final drop position
+        const finalDropTarget = this.findDropTarget(this.dragState.mouseY);
+        
+        if (finalDropTarget && finalDropTarget !== draggedItem) {
+            const targetIndex = this.getLineIndex(finalDropTarget);
+            if (targetIndex !== -1) {
+                this.reorderLineItems(draggedIndex, targetIndex);
+            }
+        }
+        
+        // Clean up
+        this.cleanupDragAndDrop();
+        
+        console.log('Drag ended. Reordered items.');
+    }
+
+    findDropTarget(mouseY) {
+        const lineWrappers = document.querySelectorAll('.line-wrapper');
+        let closestTarget = null;
+        let closestDistance = Infinity;
+        
+        lineWrappers.forEach(wrapper => {
+            if (wrapper === this.dragState.draggedItem) return;
+            
+            const rect = wrapper.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            const distance = Math.abs(mouseY - centerY);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestTarget = wrapper;
+            }
+        });
+        
+        return closestTarget;
+    }
+
+    getLineIndex(lineWrapper) {
+        return this.lineItems.findIndex(item => item.element === lineWrapper);
+    }
+
+    reorderLineItems(fromIndex, toIndex) {
+        if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return;
+        
+        // Reorder the array
+        const [movedItem] = this.lineItems.splice(fromIndex, 1);
+        this.lineItems.splice(toIndex, 0, movedItem);
+        
+        // Update DOM order
+        const container = document.querySelector('.note-content');
+        const draggedElement = movedItem.element;
+        
+        if (toIndex === 0) {
+            container.insertBefore(draggedElement, container.firstChild);
+        } else if (toIndex >= this.lineItems.length) {
+            container.appendChild(draggedElement);
+        } else {
+            const targetElement = this.lineItems[toIndex].element;
+            container.insertBefore(draggedElement, targetElement);
+        }
+        
+        // Update indices
+        this.updateLineIndices();
+        
+        // Save the note
+        this.saveCurrentNote();
+    }
+
+    updateLineIndices() {
+        this.lineItems.forEach((item, index) => {
+            item.element.dataset.lineIndex = index;
+        });
+    }
+
+    createFloatingItem(lineWrapper, top) {
+        const floatingItem = lineWrapper.cloneNode(true);
+        floatingItem.classList.add('floating-item');
+        floatingItem.style.position = 'fixed';
+        floatingItem.style.top = top + 'px';
+        floatingItem.style.left = lineWrapper.offsetLeft + 'px';
+        floatingItem.style.width = lineWrapper.offsetWidth + 'px';
+        floatingItem.style.zIndex = '1000';
+        floatingItem.style.opacity = '0.8';
+        floatingItem.style.pointerEvents = 'none';
+        
+        document.body.appendChild(floatingItem);
+        this.dragState.floatingItem = floatingItem;
+    }
+
+    updateFloatingItemPosition(top) {
+        if (this.dragState.floatingItem) {
+            this.dragState.floatingItem.style.top = top + 'px';
+        }
+    }
+
+    createDragPlaceholder(lineWrapper) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = lineWrapper.offsetHeight + 'px';
+        placeholder.style.border = '2px dashed #ccc';
+        placeholder.style.margin = '4px 0';
+        placeholder.style.borderRadius = '4px';
+        
+        lineWrapper.parentNode.insertBefore(placeholder, lineWrapper);
+        this.dragState.placeholder = placeholder;
+    }
+
+    updateDragPlaceholder(targetElement) {
+        if (this.dragState.placeholder) {
+            this.dragState.placeholder.remove();
+        }
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = targetElement.offsetHeight + 'px';
+        placeholder.style.border = '2px dashed #ccc';
+        placeholder.style.margin = '4px 0';
+        placeholder.style.borderRadius = '4px';
+        
+        targetElement.parentNode.insertBefore(placeholder, targetElement);
+        this.dragState.placeholder = placeholder;
+    }
+
+    cleanupDragAndDrop() {
+        // Remove dragging class
+        if (this.dragState.draggedItem) {
+            this.dragState.draggedItem.classList.remove('dragging');
+        }
+        
+        // Remove floating item
+        if (this.dragState.floatingItem) {
+            this.dragState.floatingItem.remove();
+            this.dragState.floatingItem = null;
+        }
+        
+        // Remove placeholder
+        if (this.dragState.placeholder) {
+            this.dragState.placeholder.remove();
+            this.dragState.placeholder = null;
+        }
+        
+        // Reset drag state
+        this.dragState.isDragging = false;
+        this.dragState.draggedItem = null;
+        this.dragState.draggedIndex = -1;
+        this.dragState.mouseY = 0;
+        this.dragState.offsetY = 0;
+    }
 }
 
 // Initialize the app when DOM is loaded
@@ -851,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     new GoogleKeepApp();
 });
 
-// Auto-resize functionality now handled per-line in setupLineEvents
+// Auto-resize functionality now handled per-line in GoogleKeepApp
 
 // Enhanced mobile input handling with stable positioning
 document.addEventListener('DOMContentLoaded', () => {

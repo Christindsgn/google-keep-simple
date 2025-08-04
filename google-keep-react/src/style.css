@@ -12,55 +12,6 @@ body.dragging {
     -ms-user-select: none;
 }
 
-/* Floating dragged item */
-.floating-item {
-    position: fixed !important;
-    z-index: 1000;
-    opacity: 0.8;
-    pointer-events: none;
-    transform: rotate(2deg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    background: white;
-}
-
-/* Drag placeholder */
-.drag-placeholder {
-    height: 24px;
-    border: 2px dashed #ccc;
-    margin: 4px 0;
-    border-radius: 4px;
-    background: #f8f9fa;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-.drag-placeholder:hover {
-    border-color: #4285f4;
-    background: #e8f0fe;
-}
-
-/* Dragging state */
-.line-wrapper.dragging {
-    opacity: 0.3;
-    transform: scale(0.95);
-    transition: all 0.2s ease;
-}
-
-/* Drag handle cursor */
-.item-drag-handle {
-    cursor: grab;
-}
-
-.item-drag-handle:active {
-    cursor: grabbing;
-}
-
 body {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #ffffff;
@@ -566,6 +517,22 @@ textarea {
     will-change: transform;
 }
 
+.drag-placeholder {
+    height: 48px;
+    border: 2px dashed #3b82f6;
+    background-color: #eff6ff;
+    border-radius: 8px;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3b82f6;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    /* Add animation */
+    animation: pulse 1s infinite;
+}
 
 @keyframes pulse {
     0% { opacity: 0.7; }
@@ -576,6 +543,15 @@ textarea {
 .drag-placeholder:hover {
     border-color: #9ca3af;
     background-color: #f3f4f6;
+}
+
+.line-wrapper.dragging {
+    opacity: 0.3;
+    background-color: #f3f4f6;
+    border-style: dashed;
+    border-color: #3b82f6;
+    border-width: 2px;
+    border-radius: 8px;
 }
 
 /* Bottom Toolbar */
