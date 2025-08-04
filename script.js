@@ -66,6 +66,8 @@ class GoogleKeepApp {
                 this.handleHeaderAction(index);
             });
         });
+
+
     }
 
 
@@ -93,6 +95,8 @@ class GoogleKeepApp {
         }
     }
 
+
+
     handleHeaderAction(index) {
         switch (index) {
             case 0: // Desktop view
@@ -105,6 +109,11 @@ class GoogleKeepApp {
                 this.downloadNote();
                 break;
         }
+    }
+
+    // Add a method to trigger drag rearrange demo from toolbar
+    showDragRearrangeFromToolbar() {
+        this.showDragRearrangeDemo();
     }
 
     // addListItem function removed - now handled by per-line input system
@@ -274,16 +283,17 @@ class GoogleKeepApp {
                         const textInput = lineWrapper.querySelector('.line-text-input, .checkbox-item-text, .bullet-item-text');
                         if (textInput) {
                             textInput.value = lineData.content || '';
-                            // Update drag handle visibility after setting content
-                            this.updateDragHandleVisibility(lineWrapper, textInput);
                         }
                         
                         // Set checkbox state
                         if (lineData.inputType === 'checkbox' && lineData.checked) {
-                            const checkbox = lineWrapper.querySelector('input[type="checkbox"]');
+                            const checkbox = lineWrapper.querySelector('.material-checkbox');
                             if (checkbox) {
-                                checkbox.checked = true;
                                 lineWrapper.querySelector('.checkbox-item').classList.add('completed');
+                                const icon = checkbox.querySelector('.material-icons');
+                                if (icon) {
+                                    icon.textContent = 'check_box';
+                                }
                             }
                         }
                     });
@@ -297,7 +307,8 @@ class GoogleKeepApp {
                 this.createNewLine();
             }
         } else {
-            // No notes exist, create initial line
+            // No notes exist, clear title and create initial line
+            document.querySelector('.title-input').value = '';
             this.createNewLine();
         }
     }
@@ -367,15 +378,9 @@ class GoogleKeepApp {
         textInput.setAttribute('readonly', 'readonly');
         textInput.setAttribute('onfocus', 'this.removeAttribute("readonly");');
         
-        // Create drag indicator (will be positioned at end)
-        const dragIndicator = document.createElement('div');
-        dragIndicator.className = 'drag-indicator';
-        dragIndicator.innerHTML = '<span class="material-icons">drag_indicator</span>';
-        
         // Assemble the structure
         contentArea.appendChild(cursorIndicator);
         contentArea.appendChild(textInput);
-        contentArea.appendChild(dragIndicator);
         lineWrapper.appendChild(contentArea);
         
         // Insert line at appropriate position
@@ -388,9 +393,7 @@ class GoogleKeepApp {
         // Setup events for this line
         this.setupLineEvents(lineWrapper, textInput);
         
-        // Initialize drag handle visibility and position
-        this.updateDragHandlePosition(lineWrapper, textInput);
-        this.updateDragHandleVisibility(lineWrapper, textInput);
+        // Drag functionality removed
         
         // Focus the new line
         textInput.focus();
@@ -404,33 +407,7 @@ class GoogleKeepApp {
         return lineWrapper;
     }
 
-    updateDragHandleVisibility(lineWrapper, textInput) {
-        // Show drag handle for checkbox and bullet inputs (even when empty)
-        const inputType = lineWrapper.dataset.inputType;
-        if (inputType === 'checkbox' || inputType === 'bullet') {
-            lineWrapper.classList.add('has-content');
-        } else {
-            lineWrapper.classList.remove('has-content');
-        }
-    }
-
-    updateDragHandlePosition(lineWrapper, textInput) {
-        if (!textInput) return;
-        
-        const dragIndicator = lineWrapper.querySelector('.drag-indicator');
-        if (!dragIndicator) return;
-        
-        // Check if textarea is multiline (scrollHeight > minHeight + some buffer)
-        const isMultiline = textInput.scrollHeight > 40; // 24px min height + padding
-        
-        if (isMultiline) {
-            // Position at the end of first line for multiline
-            dragIndicator.classList.add('multiline-position');
-        } else {
-            // Normal position at the end
-            dragIndicator.classList.remove('multiline-position');
-        }
-    }
+    // Drag handle methods removed
 
     setupLineEvents(lineWrapper, textInput) {
         const lineId = lineWrapper.dataset.lineId;
@@ -440,11 +417,7 @@ class GoogleKeepApp {
             textInput.style.height = 'auto';
             textInput.style.height = textInput.scrollHeight + 'px';
             
-            // Check if multiline and update drag handle position
-            this.updateDragHandlePosition(lineWrapper, textInput);
-            
-            // Show/hide drag handle based on content
-            this.updateDragHandleVisibility(lineWrapper, textInput);
+            // Auto-resize handling only
             
             this.saveCurrentNote();
         });
@@ -592,17 +565,14 @@ class GoogleKeepApp {
         const cursorIndicator = document.createElement('div');
         cursorIndicator.className = 'cursor-indicator';
         
-        // Create drag indicator (will be positioned at end)
-        const dragIndicator = document.createElement('div');
-        dragIndicator.className = 'drag-indicator';
-        dragIndicator.innerHTML = '<span class="material-icons">drag_indicator</span>';
-        
         if (inputType === 'checkbox') {
             const checkboxItem = document.createElement('div');
             checkboxItem.className = 'checkbox-item';
             
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
+            const checkbox = document.createElement('button');
+            checkbox.className = 'material-checkbox';
+            checkbox.type = 'button';
+            checkbox.innerHTML = '<span class="material-icons">check_box_outline_blank</span>';
             
             const textInput = document.createElement('textarea');
             textInput.className = 'checkbox-item-text';
@@ -613,23 +583,41 @@ class GoogleKeepApp {
             textInput.style.minHeight = '24px';
             textInput.setAttribute('readonly', 'readonly');
             textInput.setAttribute('onfocus', 'this.removeAttribute("readonly");');
+            textInput.setAttribute('spellcheck', 'false');
+            textInput.setAttribute('autocomplete', 'off');
+            textInput.setAttribute('autocorrect', 'off');
+            textInput.setAttribute('autocapitalize', 'off');
             
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'item-delete';
             deleteBtn.innerHTML = '<span class="material-icons">close</span>';
             
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'item-drag-handle';
+            dragHandle.innerHTML = '<span class="material-icons">drag_indicator</span>';
+            
             deleteBtn.type = 'button';
             checkboxItem.appendChild(checkbox);
             checkboxItem.appendChild(textInput);
             checkboxItem.appendChild(deleteBtn);
+            checkboxItem.appendChild(dragHandle);
             
             contentArea.appendChild(checkboxItem);
             contentArea.appendChild(cursorIndicator);
-            contentArea.appendChild(dragIndicator);
             
             // Setup checkbox toggle
-            checkbox.addEventListener('change', () => {
-                checkboxItem.classList.toggle('completed', checkbox.checked);
+            checkbox.addEventListener('click', () => {
+                const isChecked = checkboxItem.classList.contains('completed');
+                checkboxItem.classList.toggle('completed', !isChecked);
+                
+                // Update the icon
+                const icon = checkbox.querySelector('.material-icons');
+                if (checkboxItem.classList.contains('completed')) {
+                    icon.textContent = 'check_box';
+                } else {
+                    icon.textContent = 'check_box_outline_blank';
+                }
+                
                 this.saveCurrentNote();
             });
             
@@ -662,10 +650,6 @@ class GoogleKeepApp {
             
             this.setupLineEvents(lineWrapper, textInput);
             
-            // Update drag handle position and visibility based on existing content
-            this.updateDragHandlePosition(lineWrapper, textInput);
-            this.updateDragHandleVisibility(lineWrapper, textInput);
-            
             textInput.focus();
             
         } else if (inputType === 'bullet') {
@@ -686,19 +670,27 @@ class GoogleKeepApp {
             textInput.style.minHeight = '24px';
             textInput.setAttribute('readonly', 'readonly');
             textInput.setAttribute('onfocus', 'this.removeAttribute("readonly");');
+            textInput.setAttribute('spellcheck', 'false');
+            textInput.setAttribute('autocomplete', 'off');
+            textInput.setAttribute('autocorrect', 'off');
+            textInput.setAttribute('autocapitalize', 'off');
             
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'item-delete';
             deleteBtn.innerHTML = '<span class="material-icons">close</span>';
             
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'item-drag-handle';
+            dragHandle.innerHTML = '<span class="material-icons">drag_indicator</span>';
+            
             deleteBtn.type = 'button';
             bulletItem.appendChild(bulletPoint);
             bulletItem.appendChild(textInput);
             bulletItem.appendChild(deleteBtn);
+            bulletItem.appendChild(dragHandle);
             
             contentArea.appendChild(bulletItem);
             contentArea.appendChild(cursorIndicator);
-            contentArea.appendChild(dragIndicator);
             
             // Setup delete button
             deleteBtn.addEventListener('click', (e) => {
@@ -710,10 +702,6 @@ class GoogleKeepApp {
             });
             
             this.setupLineEvents(lineWrapper, textInput);
-            
-            // Update drag handle position and visibility based on existing content
-            this.updateDragHandlePosition(lineWrapper, textInput);
-            this.updateDragHandleVisibility(lineWrapper, textInput);
             
             textInput.focus();
             
@@ -727,16 +715,15 @@ class GoogleKeepApp {
             textInput.style.minHeight = '24px';
             textInput.setAttribute('readonly', 'readonly');
             textInput.setAttribute('onfocus', 'this.removeAttribute("readonly");');
+            textInput.setAttribute('spellcheck', 'false');
+            textInput.setAttribute('autocomplete', 'off');
+            textInput.setAttribute('autocorrect', 'off');
+            textInput.setAttribute('autocapitalize', 'off');
             
             contentArea.appendChild(cursorIndicator);
             contentArea.appendChild(textInput);
-            contentArea.appendChild(dragIndicator);
             
             this.setupLineEvents(lineWrapper, textInput);
-            
-            // Update drag handle position and visibility based on existing content
-            this.updateDragHandlePosition(lineWrapper, textInput);
-            this.updateDragHandleVisibility(lineWrapper, textInput);
             
             textInput.focus();
         }
@@ -827,9 +814,9 @@ class GoogleKeepApp {
             
             // Get checkbox state
             if (inputType === 'checkbox') {
-                const checkbox = lineWrapper.querySelector('input[type="checkbox"]');
-                if (checkbox) {
-                    checked = checkbox.checked;
+                const checkboxItem = lineWrapper.querySelector('.checkbox-item');
+                if (checkboxItem) {
+                    checked = checkboxItem.classList.contains('completed');
                 }
             }
             
@@ -855,6 +842,8 @@ class GoogleKeepApp {
     // bindItemEvents function removed - now handled by setupLineEvents in per-line system
 
     // handleItemDelete function removed - now handled by deleteLine in per-line system
+
+    // Drag and drop functionality removed
 }
 
 // Initialize the app when DOM is loaded
@@ -1046,7 +1035,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchmove', (e) => {
         if (isKeyboardOpen) {
             const target = e.target;
-            if (target !== titleInput && target !== contentTextarea && !mainContent.contains(target)) {
+            if (target !== titleInput && !mainContent.contains(target)) {
                 e.preventDefault();
             }
         }

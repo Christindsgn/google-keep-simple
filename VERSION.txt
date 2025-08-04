@@ -1,0 +1,10 @@
+Version: Bullet, check and text
+Mon Aug  4 19:11:14 IST 2025
+Features:
+- Fixed placeholder visibility (made visible)
+- Removed unnecessary drag handles from normal text inputs
+- Fixed title input padding and placeholder
+- Added drag handles for list items (checkboxes and bullets) with 24px gap
+- Aligned list items to flex-start
+- Removed drag handle left margin and padding
+- Set drag icon size to 24px
